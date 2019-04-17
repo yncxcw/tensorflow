@@ -1376,7 +1376,8 @@ class ExecutorState {
 };
 
 ExecutorState::ExecutorState(const Executor::Args& args, ExecutorImpl* impl)
-    : vlog_(VLOG_IS_ON(1)),
+      : vlog_(VLOG_IS_ON(1)),
+      //: vlog_(1),
       log_memory_(LogMemory::IsEnabled()),
       step_id_(args.step_id),
       rendezvous_(args.rendezvous),
@@ -1691,6 +1692,7 @@ void ExecutorState::Process(TaggedNode tagged_node, int64 scheduled_nsec) {
       nodestats::SetAllStart(stats);
     }
 
+    
     if (vlog_) {
       VLOG(1) << "Process node: " << id << " step " << params.step_id << " "
               << SummarizeNode(*node) << (tagged_node.is_dead ? " is dead" : "")
