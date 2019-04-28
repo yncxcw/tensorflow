@@ -639,6 +639,8 @@ Status DirectSession::RunInternal(int64 step_id, const RunOptions& run_options,
     };
   }
 
+  int32 items_size = executors_and_keys->items.size();
+  VLOG(1) << "Subgraph counts "  << items_size;
   for (const auto& item : executors_and_keys->items) {
     // TODO(azaks): support partial run.
     // TODO(azaks): if the device picks its own threadpool, we need to assign
