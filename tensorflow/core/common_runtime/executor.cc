@@ -21,6 +21,8 @@ limitations under the License.
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <set>
+#include <thread>
 
 #include "tensorflow/core/common_runtime/costmodel_manager.h"
 #include "tensorflow/core/common_runtime/executor_factory.h"
@@ -922,6 +924,10 @@ class ExecutorState {
     Tensor* ref = nullptr;    // A tensor reference.
     mutex* ref_mu = nullptr;  // mutex for *ref if ref is not nullptr.
 
+    //used to inspect thread pool usage
+    std::set<int64> thread_set;
+    mutex thread_set_lock;
+
     // Whether the value exists, either in <val> or <ref>.
     bool has_value = false;
 
@@ -1483,6 +1489,11 @@ Status ExecutorImpl::BuildControlFlowInfo(const Graph* g,
     }
   }
 
+  {
+  lock l(thread_set_lock);
+  thread_set.remove(this_id);
+  }
+
   return Status::OK();
 }
 
@@ -1611,7 +1622,13 @@ bool MightTrace(const NodeItem& item,
 
 void ExecutorState::Process(TaggedNode tagged_node, int64 scheduled_nsec) {
   WithContext wc(context_);
-  VLOG(1) << "Start on thread pool "<<std::this_thread::get_id();
+  int64 this_id = std::this_thread::get_id();
+  
+  {
+  lock l(thread_set_lock);
+  thread_set.insert(this_id);
+  VLOG(1) << "current thread pool: "<<thread_set.size(); 
+  }
   const GraphView& gview = impl_->gview_;
   TaggedNodeSeq ready;
   TaggedNodeReadyQueue inline_ready;
@@ -2265,7 +2282,7 @@ void ExecutorState::ScheduleReady(const TaggedNodeSeq& ready,
   if (inline_ready == nullptr) {
     // Schedule to run all the ready ops in thread pool.
     for (auto& tagged_node : ready) {
-      runner_([=]() { Process(tagged_node, scheduled_nsec); });
+      runner_([=, this]() { Process(tagged_node, scheduled_nsec); });
     }
     return;
   }
