@@ -924,10 +924,6 @@ class ExecutorState {
     Tensor* ref = nullptr;    // A tensor reference.
     mutex* ref_mu = nullptr;  // mutex for *ref if ref is not nullptr.
 
-    //used to inspect thread pool usage
-    std::set<int64> thread_set;
-    mutex thread_set_lock;
-
     // Whether the value exists, either in <val> or <ref>.
     bool has_value = false;
 
@@ -945,6 +941,12 @@ class ExecutorState {
   // device at the beginning of a step.
   DeviceContextMap device_context_map_;
 
+  //used to inspect thread pool usage
+  std::set<std::thread::id> thread_set;
+  mutex thread_set_lock;
+
+
+ 
   struct TaggedNode;
   typedef gtl::InlinedVector<TaggedNode, 8> TaggedNodeSeq;
   typedef gtl::InlinedVector<Entry, 4> EntryVector;
@@ -1427,6 +1429,7 @@ ExecutorState::~ExecutorState() {
     it->Unref();
   }
   delete slice_reader_cache_;
+  std::set<std::thread::id>().swap(thread_set);
 }
 
 Status ExecutorImpl::BuildControlFlowInfo(const Graph* g,
@@ -1487,11 +1490,6 @@ Status ExecutorImpl::BuildControlFlowInfo(const Graph* g,
         cf_info->unique_frame_names.insert(frame_name);
       }
     }
-  }
-
-  {
-  lock l(thread_set_lock);
-  thread_set.remove(this_id);
   }
 
   return Status::OK();
@@ -1622,10 +1620,10 @@ bool MightTrace(const NodeItem& item,
 
 void ExecutorState::Process(TaggedNode tagged_node, int64 scheduled_nsec) {
   WithContext wc(context_);
-  int64 this_id = std::this_thread::get_id();
+  std::thread::id this_id= std::this_thread::get_id();
   
   {
-  lock l(thread_set_lock);
+  mutex_lock l(thread_set_lock);
   thread_set.insert(this_id);
   VLOG(1) << "current thread pool: "<<thread_set.size(); 
   }
@@ -1893,6 +1891,13 @@ void ExecutorState::Process(TaggedNode tagged_node, int64 scheduled_nsec) {
 
   // This thread of computation is done if completed = true.
   if (completed) ScheduleFinish();
+  
+  {
+  mutex_lock l(thread_set_lock);
+  thread_set.erase(this_id);
+  }
+
+
 }
 
 Status ExecutorState::PrepareInputs(const NodeItem& item, Entry* first_input,
@@ -2282,7 +2287,7 @@ void ExecutorState::ScheduleReady(const TaggedNodeSeq& ready,
   if (inline_ready == nullptr) {
     // Schedule to run all the ready ops in thread pool.
     for (auto& tagged_node : ready) {
-      runner_([=, this]() { Process(tagged_node, scheduled_nsec); });
+      runner_([=]() { Process(tagged_node, scheduled_nsec); });
     }
     return;
   }
