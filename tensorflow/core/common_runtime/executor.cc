@@ -1611,6 +1611,7 @@ bool MightTrace(const NodeItem& item,
 
 void ExecutorState::Process(TaggedNode tagged_node, int64 scheduled_nsec) {
   WithContext wc(context_);
+  VLOG(1) << "Start on thread pool "<<std::this_thread::get_id();
   const GraphView& gview = impl_->gview_;
   TaggedNodeSeq ready;
   TaggedNodeReadyQueue inline_ready;
