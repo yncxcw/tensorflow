@@ -383,6 +383,7 @@ Status BaseGPUDevice::Init(const SessionOptions& options) {
     return errors::InvalidArgument("Invalid value for max_streams.");
   }
 
+  VLOG(2) << tf_gpu_id_.value()<<" max_streams "<<max_streams_;
   // Create the specified number of GPU streams
   for (int i = 0; i < max_streams_; i++) {
     streams_.push_back(StreamGroupFactory::Global().GetOrCreate(
@@ -1030,6 +1031,7 @@ Status BaseGPUDeviceFactory::CreateDevices(
     // CreateGPUDevice().
     for (PlatformGpuId platform_gpu_id : valid_platform_gpu_ids) {
 #if GOOGLE_CUDA
+      VLOG(2) << "set cuda gpu device "<<platform_gpu_id.value(); 
       err = cudaSetDevice(platform_gpu_id.value());
       if (err != cudaSuccess) {
         return errors::Internal(
