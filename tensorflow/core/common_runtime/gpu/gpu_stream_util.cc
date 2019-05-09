@@ -82,6 +82,7 @@ Status AssignStreams(const Graph* graph, const AssignStreamsOpts& opts,
     // Determine a suitable stream to use.
     int stream_id = highest_stream_id + 1;
     for (const Edge* e : n->in_edges()) {
+      //If the src of this edge only outputs to n
       const size_t fanout = e->src()->out_edges().size();
       if (fanout == 1) {
         stream_id = (*node_to_stream_id)[e->src()->id()];

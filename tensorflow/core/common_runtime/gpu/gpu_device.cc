@@ -459,7 +459,6 @@ Status BaseGPUDevice::FillContextMap(const Graph* graph,
   const size_t num_streams = streams_.size();
   // Special case for single stream.
   if (num_streams == 1) {
-    VLOG(2) << "FillContextMap single stream";
     return Status::OK();
   }
   const int64 before = Env::Default()->NowMicros();
@@ -475,6 +474,7 @@ Status BaseGPUDevice::FillContextMap(const Graph* graph,
   // duplicate DeviceContexts so long as we increment the refcount.
   device_context_map->resize(graph->num_node_ids());
   for (Node* n : graph->nodes()) {
+    //node_to_stream_id is int -> int mapping
     auto mapped_stream = node_to_stream_id[n->id()];
     CHECK_LE(mapped_stream, num_streams);
     auto ctx = device_contexts_[mapped_stream];
@@ -482,6 +482,8 @@ Status BaseGPUDevice::FillContextMap(const Graph* graph,
             << " ==> stream[" << ctx->stream_id() << "] for node id " << n->id()
             << " " << n->type_string() << " " << n->name();
     ctx->Ref();
+    //device_context_map is a member of executor. Each executor keeps 
+    //this mapping for the entire graph
     (*device_context_map)[n->id()] = ctx;
   }
 
