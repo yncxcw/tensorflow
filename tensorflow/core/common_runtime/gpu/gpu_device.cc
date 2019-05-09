@@ -459,6 +459,7 @@ Status BaseGPUDevice::FillContextMap(const Graph* graph,
   const size_t num_streams = streams_.size();
   // Special case for single stream.
   if (num_streams == 1) {
+    VLOG(2) << "FillContextMap single stream";
     return Status::OK();
   }
   const int64 before = Env::Default()->NowMicros();
