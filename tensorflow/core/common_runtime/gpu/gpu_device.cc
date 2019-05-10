@@ -312,7 +312,8 @@ BaseGPUDevice::BaseGPUDevice(const SessionOptions& options, const string& name,
       max_streams_(max_streams) {
   GPUProcessState::singleton()->EnableGPUDevice();
   pending_cap_ = options.config.gpu_options().experimental().pending_cap();
-  max_streams = options.config.gpu_options().experimental().max_streams();
+  max_streams = options.config.gpu_options().experimental().max_streams() == 0 ?
+  1 : options.config.gpu_options().experimental().max_streams();
   timestamped_allocator_ =
       options.config.gpu_options().experimental().timestamped_allocator();
   if (timestamped_allocator_ || pending_cap_ > 0) {
