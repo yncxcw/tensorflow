@@ -308,11 +308,10 @@ BaseGPUDevice::BaseGPUDevice(const SessionOptions& options, const string& name,
       cpu_allocator_(cpu_allocator),
       scoped_allocator_mgr_(new ScopedAllocatorMgr(name)),
       tf_gpu_id_(tf_gpu_id),
-      sync_every_op_(sync_every_op),
-      max_streams_(max_streams) {
+      sync_every_op_(sync_every_op){
   GPUProcessState::singleton()->EnableGPUDevice();
   pending_cap_ = options.config.gpu_options().experimental().pending_cap();
-  max_streams = options.config.gpu_options().experimental().max_streams() == 0 ?
+  max_streams_ = options.config.gpu_options().experimental().max_streams() == 0 ?
   1 : options.config.gpu_options().experimental().max_streams();
   timestamped_allocator_ =
       options.config.gpu_options().experimental().timestamped_allocator();
