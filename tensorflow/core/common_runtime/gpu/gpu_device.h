@@ -55,7 +55,7 @@ class BaseGPUDevice : public LocalDevice {
                 Bytes memory_limit, const DeviceLocality& locality,
                 TfGpuId tf_gpu_id, const string& physical_device_desc,
                 Allocator* gpu_allocator, Allocator* cpu_allocator,
-                bool sync_every_op, int32 max_streams);
+                bool sync_every_op);
 
   ~BaseGPUDevice() override;
 
@@ -151,7 +151,7 @@ class BaseGPUDevice : public LocalDevice {
   mutex trace_mu_;
   TfGpuId tf_gpu_id_;
   const bool sync_every_op_ = false;
-  const int32 max_streams_;
+  int32 max_streams_;
   std::unique_ptr<EventMgr> em_;
   std::unique_ptr<thread::ThreadPool> thread_pool_;
   std::unique_ptr<GPUKernelTracker> kernel_tracker_;
