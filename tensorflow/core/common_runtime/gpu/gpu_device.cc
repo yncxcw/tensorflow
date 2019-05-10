@@ -312,6 +312,7 @@ BaseGPUDevice::BaseGPUDevice(const SessionOptions& options, const string& name,
       max_streams_(max_streams) {
   GPUProcessState::singleton()->EnableGPUDevice();
   pending_cap_ = options.config.gpu_options().experimental().pending_cap();
+  max_streams = options.config.gpu_options().experimental().max_streams();
   timestamped_allocator_ =
       options.config.gpu_options().experimental().timestamped_allocator();
   if (timestamped_allocator_ || pending_cap_ > 0) {
@@ -543,7 +544,9 @@ void BaseGPUDevice::ComputeHelper(OpKernel* op_kernel,
       OP_REQUIRES(context, idc != nullptr,
                   errors::Internal("Input device context ", i,
                                    " was not set properly."));
-      if (vlog_2) {
+      //Wei: This print causes error, as tensor.TotablBytes
+      //might be uninitilized ??????
+      if (0) {
         const void* base;
         size_t len;
         if (context->has_input(i)) {

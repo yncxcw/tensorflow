@@ -166,6 +166,9 @@ message GPUOptions {
     // If > 0 limit the number of pending kernels on any compute
     // stream to this number.
     int32 pending_cap = 6;
+
+    // 1 by default, allows each gpu devices to have more than 1 stream.
+    int32 max_streams = 7 [default = 1];
   }
 
   // Everything inside experimental is subject to change and is not subject
